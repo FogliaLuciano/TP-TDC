@@ -17,7 +17,6 @@ ax.legend()
 xdata, ydata1, ydata2 = [], [], []
 
 
-# Update function
 def update(frame):
     xdata.append(frame)
     ydata1.append(speed_modifier(frame))

@@ -18,9 +18,9 @@ from perturbaciones import generar_perturbacion
 hilos_activos = True
 
 
-# Bucle infinito para simular las iteraciones
 def bucle_infinito():
     global hilos_activos
+
     torque_motor = 0  # Porque arranca en reposo
     setpoint = 6  # Volts que seran traducidos a km/h
     senial_realimentacion = 0
@@ -35,7 +35,7 @@ def bucle_infinito():
         senial_salida = procesamiento_motor(torque_motor)
         senial_realimentacion = lectura_velocimetro(senial_salida)
 
-        # Graficar las seniales con el plotter
+        # TODO: Graficar las seniales con el plotter
         print(f"Torque motor: {torque_motor}")
         print(f"Senial realimentacion: {senial_realimentacion}")
         print(f"Senial error: {senial_error}")
@@ -57,13 +57,11 @@ def bucle_lectura_perturbaciones():
         generar_perturbacion(entrada)
 
 
-# Crear y arrancar los hilos
 hilo_bucle = threading.Thread(target=bucle_infinito)
 hilo_entrada = threading.Thread(target=bucle_lectura_perturbaciones)
 
 hilo_bucle.start()
 hilo_entrada.start()
 
-# Esperar a que los hilos terminen (aunque en este caso, nunca terminarán)
 hilo_bucle.join()
 hilo_entrada.join()
