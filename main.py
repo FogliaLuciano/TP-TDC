@@ -2,30 +2,26 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-# Configuración interactiva para gráficos en tiempo real
+
 plt.ion()
 
-# Parámetros iniciales
-setpoint_volt = 5.0  # Setpoint en voltios (proporcional a la velocidad deseada)
-volt_to_kmh = 12  # Conversión de voltios a km/h (5 V → 60 km/h)
-setpoint_speed = setpoint_volt * volt_to_kmh  # Velocidad deseada (km/h)
 
-# Tiempo de simulación
-tiempo_scan = 1  # Intervalo de muestreo en segundos
+setpoint_volt = 6.0  # Setpoint en voltios (proporcional a la velocidad deseada)
+volt_to_kmh = 10  # Conversión de voltios a km/h (6 V → 60 km/h)
+setpoint_speed = setpoint_volt * volt_to_kmh
+
+# Intervalo de muestreo en segundos
+tiempo_scan = 1
 
 # Parámetros del PID
-Ki = 0.1  # Ganancia integral
-Kd = 0.05  # Ganancia derivativa
-
-# Umbrales para la parte proporcional
+Ki = 0.1
+Kd = 0.05
 umbrales_proporcionales = [
     (0, 2, 0.5),
     (2, 5, 1.0),
     (5, 10, 1.5),
     (10, float("inf"), 2.0),
 ]
-
-# Umbrales para el gráfico
 umbrales = {
     "Umbral 3": 55,
     "Umbral 2": 50,
@@ -39,30 +35,25 @@ color_umbrales = {
     "Setpoint": "b",
 }
 
-# Variables de estado
-velocidad = 0.0  # Velocidad inicial del motor (km/h)
-integral = 0.0  # Integral del error
-error_prev = 0.0  # Error previo
-control_signal = 0.0  # Señal de control
+velocidad = 0.0
+integral = 0.0
+error_prev = 0.0
+control_signal = 0.0
 
-# Perturbaciones (tiempo relativo: cambio en velocidad)
 perturbaciones = {
     10: -5,
     30: 10,
     50: -15,
 }
 
-# Listas para graficar
 tiempos = []
 velocidades = []
 control_signals = []
 errores = []
 
-# Configuración inicial del gráfico
 fig, axs = plt.subplots(3, 1, figsize=(14, 10))
 
 
-# Función para obtener Kp según los umbrales
 def obtener_kp_por_umbrales(error, umbrales):
     abs_error = abs(error)
     for lower, upper, kp in umbrales:
@@ -71,12 +62,10 @@ def obtener_kp_por_umbrales(error, umbrales):
     return umbrales[-1][2]
 
 
-# Función para aplicar perturbaciones
 def aplicar_perturbacion(t, velocidad_actual):
     return velocidad_actual + perturbaciones.get(t % 60, 0)
 
 
-# Función del controlador PID
 def controlador_pid(setpoint, realimentacion, integral, error_prev, Ki, Kd, umbrales):
     error = setpoint - realimentacion
     integral += error * tiempo_scan
@@ -86,13 +75,9 @@ def controlador_pid(setpoint, realimentacion, integral, error_prev, Ki, Kd, umbr
     return salida_control, integral, error
 
 
-# Simulación en tiempo real
 t = 0
-while (
-    t < 300
-):  # Para mantenerlo controlado, puedes cambiar el límite o eliminarlo para infinito
+while t < 300:
     t += tiempo_scan
-    # Aplicar perturbaciones
     velocidad = aplicar_perturbacion(t, velocidad)
 
     # Calcular señal de control
@@ -108,13 +93,11 @@ while (
     # Limitar velocidad a valores razonables
     velocidad = max(0, velocidad)
 
-    # Actualizar listas
     tiempos.append(t)
     velocidades.append(velocidad)
     control_signals.append(control_signal)
     errores.append(error)
 
-    # Actualizar gráficos
     axs[0].cla()
     axs[0].plot(tiempos, velocidades, label="Velocidad (km/h)", color="b")
 
@@ -148,7 +131,6 @@ while (
 
     plt.pause(0.01)
 
-    # Simular tiempo real
     time.sleep(tiempo_scan)
 
 plt.ioff()
