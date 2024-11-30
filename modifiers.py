@@ -18,9 +18,8 @@ def procesamiento_unidad_correccion_de_la_consola(senial_u):
     return senial_u * 2
 
 
-def aplicar_variacion_toque(torque_motor, variacion_torque_requerida):
-    torque_motor += variacion_torque_requerida
-    return torque_motor
+def aplicar_variacion_torque(torque_motor, variacion_torque_requerida):
+    return torque_motor + variacion_torque_requerida
 
 
 def procesamiento_motor(torque_motor):

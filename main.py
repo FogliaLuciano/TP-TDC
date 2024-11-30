@@ -1,6 +1,6 @@
 import time
 from modifiers import (
-    aplicar_variacion_toque,
+    aplicar_variacion_torque,
     lectura_velocimetro,
     procesamiento_motor,
     procesamiento_unidad_correccion_de_la_consola,
@@ -8,7 +8,6 @@ from modifiers import (
     procesamiento_unidad_control_de_la_consola,
 )
 import threading
-
 from perturbaciones import generar_perturbacion
 
 # 1 volt = 10 km/h ?
@@ -31,7 +30,9 @@ def bucle_infinito():
         variacion_torque_requerida = procesamiento_unidad_correccion_de_la_consola(
             senial_u
         )
-        torque_motor = aplicar_variacion_toque(torque_motor, variacion_torque_requerida)
+        torque_motor = aplicar_variacion_torque(
+            torque_motor, variacion_torque_requerida
+        )
         senial_salida = procesamiento_motor(torque_motor)
         senial_realimentacion = lectura_velocimetro(senial_salida)
 
