@@ -1,17 +1,9 @@
-def speed_modifier(t):
-    return 0.5 * t
-
-
-def acceleration_modifier(t):
-    return 3
-
-
 def punto_suma(setpoint, realimentacion):
     return setpoint - realimentacion
 
 
 def procesamiento_unidad_control_de_la_consola(error):
-    return 0.5 * error
+    return 1
 
 
 def procesamiento_unidad_correccion_de_la_consola(senial_u):

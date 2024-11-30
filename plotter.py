@@ -1,31 +1,37 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.animation as animation
-from modifiers import speed_modifier, acceleration_modifier
-
-fig, ax = plt.subplots()
-(line1,) = ax.plot([], [], label="Velocidad")
-(line2,) = ax.plot([], [], label="Aceleración")
-ax.set_xlim(0, 10)
-ax.set_ylim(0, 10)
-ax.set_xlabel("Tiempo")
-ax.set_ylabel("Magnitudes")
-ax.set_title("Variables over Time")
-ax.legend()
+from global_variables import GlobalVariables
 
 
-xdata, ydata1, ydata2 = [], [], []
+class Plotter:
+    def __init__(self):
+        self.fig, self.ax = plt.subplots()
+        (self.line1,) = self.ax.plot([], [], label="Error")
+        (self.line2,) = self.ax.plot([], [], label="Realimentacion")
+        self.xdata = []
+        self.ydata1 = []
+        self.ydata2 = []
 
+    def preparar_plot(self):
+        self.ax.set_xlim(0, 10)
+        self.ax.set_ylim(0, 10)
+        self.ax.set_xlabel("Tiempo")
+        self.ax.set_ylabel("Magnitudes")
+        self.ax.set_title("Variables over Time")
+        self.ax.legend()
+        ani = animation.FuncAnimation(
+            self.fig, self._update, frames=np.linspace(0, 100, 1000), blit=True
+        )
+        plt.show()
 
-def update(frame):
-    xdata.append(frame)
-    ydata1.append(speed_modifier(frame))
-    ydata2.append(acceleration_modifier(frame))
-    line1.set_data(xdata, ydata1)
-    line2.set_data(xdata, ydata2)
-    return line1, line2
+    def _update(self, frame):
+        senial_error = GlobalVariables.senial_error
+        senial_realimentacion = GlobalVariables.senial_realimentacion
 
-
-ani = animation.FuncAnimation(fig, update, frames=np.linspace(0, 100, 1000), blit=True)
-
-plt.show()
+        self.xdata.append(frame)
+        self.ydata1.append(senial_error)
+        self.ydata2.append(senial_realimentacion)
+        self.line1.set_data(self.xdata, self.ydata1)
+        self.line2.set_data(self.xdata, self.ydata2)
+        return self.line1, self.line2
