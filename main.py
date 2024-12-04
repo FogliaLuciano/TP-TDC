@@ -10,7 +10,9 @@ class ControladorVelocidad:
     def __init__(self):
         self.setpoint_volt = 6.0
         self.volt_to_kmh = 10  # Conversión de voltios a km/h (6 V → 60 km/h)
-        self.setpoint_speed = self.setpoint_volt * self.volt_to_kmh
+        # Sirve para settear la velocidad inicial
+        self.velocidad_en_km_h = 60
+        self.velocidad_en_volts = self.velocidad_en_km_h / self.volt_to_kmh
 
         self.tiempo_scan = 1
 
@@ -18,17 +20,17 @@ class ControladorVelocidad:
         self.Kd = 0.2
 
         self.umbrales_proporcionales = [
-            (0, 1, 1.0),  # Rango de error [0, 1): Kp = 1.0
-            (1, 2, 1.5),  # Rango de error [1, 2): Kp = 1.5
-            (2, 3, 2.0),  # Rango de error [2, 3): Kp = 2.0
-            (3, float("inf"), 3.0),  # Error >= 3: Kp = 3.0
+            (0, 1, 2.0),  # Rango de error [0, 1): Kp = 2.0
+            (1, 2, 2.5),  # Rango de error [1, 2): Kp = 2.5
+            (2, 3, 3.0),  # Rango de error [2, 3): Kp = 3.0
+            (3, float("inf"), 4.0),  # Error >= 3: Kp = 4.0
         ]
 
         self.umbrales_frecuencias = [
-            (0, 2, 0.05),  # Rango de error [0, 2): Frecuencia = 0.05
-            (2, 5, 0.1),  # Rango de error [2, 5): Frecuencia = 0.1
-            (5, 10, 0.2),  # Rango de error [5, 10): Frecuencia = 0.2
-            (10, float("inf"), 0.3),  # Error >= 10: Frecuencia = 0.3
+            (0, 2, 0.1),  # Rango de error [0, 2): Frecuencia = 0.1
+            (2, 5, 0.2),  # Rango de error [2, 5): Frecuencia = 0.2
+            (5, 10, 0.3),  # Rango de error [5, 10): Frecuencia = 0.3
+            (10, float("inf"), 0.5),  # Error >= 10: Frecuencia = 0.5
         ]
 
         self.umbrales = {
@@ -43,7 +45,6 @@ class ControladorVelocidad:
             "Umbral 3": "g",
         }
 
-        self.velocidad = self.setpoint_speed
         self.integral = 0.0
         self.error_prev = 0.0
         self.control_signal = 0.0
@@ -72,13 +73,17 @@ class ControladorVelocidad:
         return umbrales[-1][2]
 
     def controlador_pid(self, setpoint, realimentacion, integral, error_prev, Ki, Kd):
+        # Inicio punto suma
         error = setpoint - realimentacion
+        # Fin punto suma
 
+        # Inicio unidad de control de la consola
         integral += error * self.tiempo_scan
         derivative = (error - error_prev) / self.tiempo_scan
         Kp = self.obtener_valor_por_umbrales(error, self.umbrales_proporcionales)
         salida_control = Kp * error + Ki * integral + Kd * derivative
         return salida_control, integral, error
+        # Fin unidad de control de la consola
 
     def aplicar_ajuste_frecuencia(self, error):
         frecuencia_ajuste = self.obtener_valor_por_umbrales(
@@ -87,15 +92,18 @@ class ControladorVelocidad:
         return frecuencia_ajuste
 
     def perturbar_arriba(self, event):
-        perturbacion = 2
-        self.velocidad += perturbacion
-        print(f"Perturbación manual: +{perturbacion} km/h")
+        perturbacion = 0.2
+        self.velocidad_en_volts += perturbacion
+        print(f"Perturbación manual: +{perturbacion * self.volt_to_kmh} km/h")
 
     def perturbar_abajo(self, event):
-        perturbacion = -2
-        self.velocidad += perturbacion
-        self.velocidad = max(0, self.velocidad)
-        print(f"Perturbación manual: {perturbacion} km/h")
+        perturbacion = -0.2
+        self.velocidad_en_volts += perturbacion
+        self.velocidad_en_volts = max(0, self.velocidad_en_volts)
+        print(f"Perturbación manual: {perturbacion * self.volt_to_kmh} km/h")
+
+    def leer_velocimetro(self, velocidad_en_km_h):
+        return velocidad_en_km_h / self.volt_to_kmh
 
     def run(self, tiempo_total=300):
         t = 0
@@ -103,8 +111,8 @@ class ControladorVelocidad:
             t += self.tiempo_scan
 
             self.control_signal, self.integral, error = self.controlador_pid(
-                self.setpoint_speed,
-                self.velocidad,
+                self.setpoint_volt,
+                self.velocidad_en_volts,
                 self.integral,
                 self.error_prev,
                 self.Ki,
@@ -112,18 +120,25 @@ class ControladorVelocidad:
             )
             self.error_prev = error
 
+            # Inicio del proceso de variador de frecuencias
             frecuencia_ajuste = self.aplicar_ajuste_frecuencia(error)
+            # Fin del proceso de variador de frecuencias
 
-            self.velocidad += frecuencia_ajuste * self.control_signal
+            # Inicio del proceso de dinamica del auto
+            self.velocidad_en_km_h += frecuencia_ajuste * self.control_signal
+            self.velocidad_en_km_h = max(0, self.velocidad_en_km_h)
+            # Fin del proceso de dinamica del auto
 
-            self.velocidad = max(0, self.velocidad)
+            # Inicio del proceso de velocimetro
+            self.velocidad_en_volts = self.leer_velocimetro(self.velocidad_en_km_h)
+            # Fin del proceso de velocimetro
 
             print(
-                f"Tiempo: {t:.2f} s, Velocidad: {self.velocidad:.2f} km/h, Control: {self.control_signal:.2f}, Error: {error:.2f}"
+                f"Tiempo: {t} s, Velocidad: {self.velocidad_en_km_h:.2f} km/h, Control: {self.control_signal:.4f}, Error: {error:.4f}"
             )
 
             self.tiempos.append(t)
-            self.velocidades.append(self.velocidad)
+            self.velocidades.append(self.velocidad_en_km_h)
             self.control_signals.append(self.control_signal)
             self.errores.append(error)
 
@@ -144,20 +159,20 @@ class ControladorVelocidad:
 
         for nombre_umbral, valor_umbral in self.umbrales.items():
             self.axs[0].axhline(
-                y=self.setpoint_speed + valor_umbral,
+                y=self.velocidad_en_km_h + valor_umbral,
                 color=self.color_umbrales[nombre_umbral],
                 linestyle="dashdot",
                 label=f"{nombre_umbral} +",
             )
             self.axs[0].axhline(
-                y=self.setpoint_speed - valor_umbral,
+                y=self.velocidad_en_km_h - valor_umbral,
                 color=self.color_umbrales[nombre_umbral],
                 linestyle="dashdot",
                 label=f"{nombre_umbral} -",
             )
 
         self.axs[0].axhline(
-            y=self.setpoint_speed, color="k", linestyle="dotted", label="Setpoint"
+            y=self.velocidad_en_km_h, color="k", linestyle="dotted", label="Setpoint"
         )
 
         self.axs[0].set_title(
