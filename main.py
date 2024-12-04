@@ -110,6 +110,7 @@ class ControladorVelocidad:
         while t < tiempo_total:
             t += self.tiempo_scan
 
+            # Inicio del PLC
             self.control_signal, self.integral, error = self.controlador_pid(
                 self.setpoint_volt,
                 self.velocidad_en_volts,
@@ -119,6 +120,7 @@ class ControladorVelocidad:
                 self.Kd,
             )
             self.error_prev = error
+            # Fin del PLC
 
             # Inicio del proceso de variador de frecuencias
             frecuencia_ajuste = self.aplicar_ajuste_frecuencia(error)
