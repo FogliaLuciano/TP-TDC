@@ -42,8 +42,11 @@ class ControladorVelocidad:
         self.btn_down.on_clicked(self.perturbar_abajo)
 
     def controlador_pid(self, setpoint, realimentacion):
+        # INICIO PUNTO SUMA
         error = setpoint - realimentacion
+        # FIN PUNTO SUMA
 
+        # INICIO UNIDAD DE CONTROL DE LA CONSOLA
         self.integral += error * self.tiempo_scan
 
         derivative = (error - self.error_prev) / self.tiempo_scan
@@ -55,6 +58,7 @@ class ControladorVelocidad:
         self.error_prev = error
 
         return self.control_signal, error
+        # FIN UNIDAD DE CONTROL DE LA CONSOLA
 
     def perturbar_arriba(self, event):
         perturbacion = 0.5
@@ -75,20 +79,25 @@ class ControladorVelocidad:
         while True:
             t += self.tiempo_scan
 
+            # INICIO PUNTO SUMA Y UNIDAD DE LA CONTROL DE LA CONSOLA (PLC)
             realimentacion = self.velocidad_en_volts
             self.control_signal, error = self.controlador_pid(
                 self.setpoint_volt, realimentacion
             )
+            # FIN PUNTO SUMA Y UNIDAD DE LA CONTROL DE LA CONSOLA
 
-            frecuencia_ajuste = self.control_signal
+            # INICIO UNIDAD DE CORRECCION DE LA CONSOLA (VARIADOR DE FRECUENCIAS)
+            frecuencia_ajuste = self.control_signal - 0.05 * self.velocidad_en_km_h
+            # FIN UNIDAD DE CORRECCION DE LA CONSOLA
 
-            # Dinámica del vehículo
-            self.velocidad_en_km_h += (
-                frecuencia_ajuste - 0.05 * self.velocidad_en_km_h
-            ) * self.tiempo_scan
+            # INICO PLANTA/PROCESO (MOTOR)
+            self.velocidad_en_km_h += frecuencia_ajuste * self.tiempo_scan
             self.velocidad_en_km_h = max(0, self.velocidad_en_km_h)
+            # FIN PLANTA/PROCESO
 
+            # INICIO VELOCIMETRO
             self.velocidad_en_volts = self.leer_velocimetro(self.velocidad_en_km_h)
+            # FIN VELOCIMETRO
 
             print(
                 f"Tiempo: {t} s, Velocidad: {self.velocidad_en_km_h:.2f} km/h, Control: {self.control_signal:.4f}, Error: {error:.4f}"
