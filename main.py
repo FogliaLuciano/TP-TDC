@@ -79,12 +79,12 @@ class ControladorVelocidad:
         while True:
             t += self.tiempo_scan
 
-            # INICIO PUNTO SUMA Y UNIDAD DE LA CONTROL DE LA CONSOLA (PLC)
+            # INICIO PUNTO SUMA Y UNIDAD DE CONTROL DE LA CONSOLA (PLC)
             realimentacion = self.velocidad_en_volts
             self.control_signal, error = self.controlador_pid(
                 self.setpoint_volt, realimentacion
             )
-            # FIN PUNTO SUMA Y UNIDAD DE LA CONTROL DE LA CONSOLA
+            # FIN PUNTO SUMA Y UNIDAD DE CONTROL DE LA CONSOLA
 
             # INICIO UNIDAD DE CORRECCION DE LA CONSOLA (VARIADOR DE FRECUENCIAS)
             frecuencia_ajuste = self.control_signal - 0.05 * self.velocidad_en_km_h
