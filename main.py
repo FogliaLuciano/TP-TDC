@@ -34,11 +34,11 @@ class ControladorVelocidad:
         plt.subplots_adjust(bottom=0.3)
 
         self.ax_btn_up = plt.axes([0.3, 0.15, 0.1, 0.05])
-        self.btn_up = Button(self.ax_btn_up, "Perturbar -")
+        self.btn_up = Button(self.ax_btn_up, "Perturbar +")
         self.btn_up.on_clicked(self.perturbar_arriba)
 
         self.ax_btn_down = plt.axes([0.6, 0.15, 0.1, 0.05])
-        self.btn_down = Button(self.ax_btn_down, "Perturbar +")
+        self.btn_down = Button(self.ax_btn_down, "Perturbar -")
         self.btn_down.on_clicked(self.perturbar_abajo)
 
     def controlador_pid(self, setpoint, realimentacion):
@@ -61,15 +61,16 @@ class ControladorVelocidad:
         # FIN UNIDAD DE CONTROL DE LA CONSOLA
 
     def perturbar_arriba(self, event):
-        perturbacion = 0.5
-        self.velocidad_en_volts += perturbacion
-        print(f"Perturbación manual: -{perturbacion * self.volt_to_kmh} km/h")
+        perturbacion_kmh = 30  # Perturbación de 30 km/h
+        self.velocidad_en_km_h += perturbacion_kmh
+        self.velocidad_en_volts = self.leer_velocimetro(self.velocidad_en_km_h)
+        print(f"Perturbación manual: +{perturbacion_kmh} km/h")
 
     def perturbar_abajo(self, event):
-        perturbacion = -0.5
-        self.velocidad_en_volts += perturbacion
-        self.velocidad_en_volts = max(0, self.velocidad_en_volts)
-        print(f"Perturbación manual: +{abs(perturbacion) * self.volt_to_kmh} km/h")
+        perturbacion_kmh = 30  # Perturbación de 30 km/h
+        self.velocidad_en_km_h = max(0, self.velocidad_en_km_h - perturbacion_kmh)
+        self.velocidad_en_volts = self.leer_velocimetro(self.velocidad_en_km_h)
+        print(f"Perturbación manual: -{perturbacion_kmh} km/h")
 
     def leer_velocimetro(self, velocidad_en_km_h):
         return velocidad_en_km_h / self.volt_to_kmh
